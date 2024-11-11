@@ -44,11 +44,11 @@ class FileContent
             mkdir($destination, 0755, true);
         }
 
-        if (fopen($destinationFile, "wb") === false) {
+        if (fopen($destinationFile, 'wb') === false) {
             return;
         }
 
-        $resource = fopen($destinationFile, "wb");
+        $resource = fopen($destinationFile, 'wb');
 
         if ($resource === false) {
             return;
