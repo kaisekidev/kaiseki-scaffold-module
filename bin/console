@@ -1,0 +1,16 @@
+#!/usr/bin/env php
+<?php
+
+require_once __DIR__ . '/../vendor/autoload.php';  // Path to autoload if bin is directly in the root
+
+use Symfony\Component\Console\Application;
+use Kaiseki\ScaffoldModule\BootstrapModuleCommand;
+
+// Create a new console application instance
+$application = new Application();
+
+// Add your custom command to the application
+$application->add(new BootstrapModuleCommand());
+
+// Run the application
+$application->run();
