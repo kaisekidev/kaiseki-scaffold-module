@@ -26,6 +26,7 @@ use function filter_var;
 use function in_array;
 use function is_dir;
 use function is_file;
+use function is_string;
 use function mkdir;
 use function pathinfo;
 use function preg_match;
@@ -90,12 +91,10 @@ class BootstrapModuleCommand extends Command
 
     private function copyOutput(): void
     {
-        /** @var SplFileInfo[] $iterator */
-        // @phpstan-ignore-next-line
         $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($this->outputDir));
 
         foreach ($iterator as $fileInfo) {
-            if ($fileInfo->isDir()) {
+            if (!$fileInfo instanceof SplFileInfo || $fileInfo->isDir()) {
                 continue;
             }
 
@@ -140,11 +139,13 @@ class BootstrapModuleCommand extends Command
         }
 
         $iterator = new RecursiveDirectoryIterator($path, RecursiveDirectoryIterator::SKIP_DOTS);
-        /** @var SplFileInfo[] $files */
-        // @phpstan-ignore-next-line
         $files = new RecursiveIteratorIterator($iterator, RecursiveIteratorIterator::CHILD_FIRST);
 
         foreach ($files as $fileInfo) {
+            if (!$fileInfo instanceof SplFileInfo) {
+                continue;
+            }
+
             if ($fileInfo->isDir()) {
                 $this->deleteDirectory($fileInfo->getRealPath());
             } else {
@@ -222,7 +223,9 @@ class BootstrapModuleCommand extends Command
             ),
             $moduleName
         );
-        $question->setValidator(function (string $answer): string {
+        $question->setValidator(function (mixed $answer): string {
+            $answer = is_string($answer) ? $answer : '';
+
             if (preg_match('/^[a-z0-9](([_.]?|-{0,2})[a-z0-9]+)*$/', $answer) !== 1) {
                 throw new RuntimeException(sprintf('%s is not a valid package name.', $answer));
             }
@@ -277,7 +280,9 @@ class BootstrapModuleCommand extends Command
             ),
             $namespace
         );
-        $question->setValidator(function (string $answer): string {
+        $question->setValidator(function (mixed $answer): string {
+            $answer = is_string($answer) ? $answer : '';
+
             if (preg_match('/^[A-Z][A-Za-z0-9]*$/', $answer) !== 1) {
                 throw new RuntimeException(sprintf('%s is not a valid namespace.', $answer));
             }
@@ -307,7 +312,9 @@ class BootstrapModuleCommand extends Command
             ),
             $url
         );
-        $question->setValidator(function (string $answer): string {
+        $question->setValidator(function (mixed $answer): string {
+            $answer = is_string($answer) ? $answer : '';
+
             if (filter_var($answer, FILTER_VALIDATE_URL) === false) {
                 throw new RuntimeException(sprintf('%s is not a URL.', $answer));
             }
@@ -362,12 +369,10 @@ class BootstrapModuleCommand extends Command
             return $result;
         }
 
-        /** @var SplFileInfo[] $iterator */
-        // @phpstan-ignore-next-line
         $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory));
 
         foreach ($iterator as $fileInfo) {
-            if ($fileInfo->isFile()) {
+            if ($fileInfo instanceof SplFileInfo && $fileInfo->isFile()) {
                 $filePath = realpath($fileInfo->getPathname());
 
                 if ($filePath === false) {

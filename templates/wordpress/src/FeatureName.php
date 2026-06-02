@@ -6,11 +6,6 @@ namespace Kaiseki\WordPress\%namespace%;
 
 use Kaiseki\WordPress\Hook\HookProviderInterface;
 
-use function __;
-use function add_action;
-use function sprintf;
-use function trim;
-
 final class FeatureName implements HookProviderInterface
 {
     public function __construct(private readonly string $notice)
@@ -19,17 +14,17 @@ final class FeatureName implements HookProviderInterface
 
     public function addHooks(): void
     {
-        add_action('admin_notices', [$this, 'displayNotice']);
+        \add_action('admin_notices', [$this, 'displayNotice']);
     }
 
     public function displayNotice(): void
     {
-        if (trim($this->notice) === '') {
+        if (\trim($this->notice) === '') {
             return;
         }
 
-        $notice = sprintf(
-            __('Kaiseki module %s is active', 'kaiseki'),
+        $notice = \sprintf(
+            \__('Kaiseki module %s is active', 'kaiseki'),
             $this->notice
         );
 
