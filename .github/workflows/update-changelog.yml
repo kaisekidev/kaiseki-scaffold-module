@@ -1,0 +1,67 @@
+# Keeps CHANGELOG.md in sync automatically: when you publish a GitHub Release,
+# this updates CHANGELOG.md from the release notes and opens an auto-merging PR.
+# PR-based (not a direct push to master) so it works under the org
+# branch-protection baseline.
+#
+# Cut a release with:
+#   gh release create X.Y.Z --generate-notes --title X.Y.Z --target master
+# Tags are bare semver (no `v` prefix).
+#
+# Auth: mints a short-lived token from the org's `kaiseki-doc-bot` GitHub App
+# (the org forbids the Actions GITHUB_TOKEN from opening PRs). Prereqs: the App
+# + the APP_ID / APP_PRIVATE_KEY org secrets must be granted to this repo, and
+# "Allow auto-merge" enabled. See docs/governance/repo-defaults.md.
+
+name: Update Changelog
+
+on:
+  release:
+    types: [released]
+
+permissions:
+  contents: read
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate a token from the kaiseki-doc-bot app
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          ref: master
+
+      - name: Update Changelog
+        uses: stefanzweifel/changelog-updater-action@v1
+        with:
+          latest-version: ${{ github.event.release.name }}
+          release-notes: ${{ github.event.release.body }}
+
+      - name: Open changelog PR
+        id: cpr
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          base: master
+          branch: changelog/${{ github.event.release.tag_name }}
+          delete-branch: true
+          commit-message: "Update CHANGELOG for ${{ github.event.release.tag_name }}"
+          title: "Update CHANGELOG for ${{ github.event.release.tag_name }}"
+          labels: changelog
+          body: |
+            Automated changelog update for release **${{ github.event.release.tag_name }}**,
+            generated from the release notes by `changelog-updater-action`.
+
+      - name: Enable auto-merge
+        if: steps.cpr.outputs.pull-request-operation == 'created'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          gh pr merge --squash --auto "${{ steps.cpr.outputs.pull-request-number }}" \
+            || echo "::notice::auto-merge unavailable — merge PR #${{ steps.cpr.outputs.pull-request-number }} manually"

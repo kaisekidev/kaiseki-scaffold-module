@@ -1,0 +1,12 @@
+name: Checks
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+jobs:
+  checks:
+    uses: kaisekidev/.github/.github/workflows/checks.yml@v1
+    with:
+      run-tests: false   # scaffolding tool — no tests; static analysis only
