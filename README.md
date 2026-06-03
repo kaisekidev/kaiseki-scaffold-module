@@ -21,15 +21,42 @@ and runs `composer update`.
 ## Usage
 
 Answer the prompts; the resulting package is ready to `git init`, push, and open
-its first PR against. A scaffolded module ships with CI defaulting to static
-analysis only (`run-tests: false`) — flip that on once you add real tests (see
-the comment in the generated `.github/workflows/checks.yml`).
+its first PR against. A scaffolded module ships the canonical CI caller verbatim,
+which runs the full suite — phpunit + a 100% coverage gate across PHP
+8.2/8.3/8.4. A fresh module has no tests yet, so its first CI run goes red until
+you either add tests or uncomment the per-package override in the generated
+`.github/workflows/checks.yml` (`run-tests: false` for static analysis only, or
+`coverage-threshold: 0` to relax the gate while coverage catches up).
+
+## Org-wide baselines
+
+This repo is the canonical home for two static baseline files that every
+`kaiseki/*` package (and `kaiseki-org`'s tooling, e.g. `apply-dependabot-config.sh`)
+copies in. Edit them here:
+
+- **`templates/phpunit.xml`** — the single PHPUnit 11 baseline for all modules.
+  It carries a `%test_namespace%` placeholder that the scaffold fills in at
+  generate time (WordPress modules nest tests under an extra `WordPress\`
+  segment; core modules don't), so there's one file instead of a per-type copy.
+- **`templates/shared/.github/dependabot.yml`** — the single Dependabot baseline.
+  Dev deps and GitHub Actions are each grouped into one weekly PR; runtime deps
+  get individual PRs. Production-major holds are a deliberate per-package choice
+  (`ignore:`), not baked into the baseline.
+
+The two CI caller workflows the scaffold emits (`.github/workflows/checks.yml`
+and `update-changelog.yml`) are **not** owned here. They are thin callers kept
+byte-for-byte in sync with the canonical org starter workflows in
+[kaisekidev/.github](https://github.com/kaisekidev/.github/tree/master/workflow-templates).
+`bin/check-workflow-sync.sh` (run in CI and via `composer check-workflows`) fails
+if `templates/shared/.github/workflows/*.yml` drift from those starters — re-sync
+from the starters rather than editing the copies here.
 
 ## Development
 
 ```bash
-composer check       # check-deps + cs-check + phpstan
-composer cs-fix      # apply php-cs-fixer fixes
+composer check            # check-deps + cs-check + phpstan
+composer check-workflows  # diff emitted callers against the canonical starters
+composer cs-fix           # apply php-cs-fixer fixes
 ```
 
 `test-create-module.sh <branch> <dest>` generates a throwaway module from a

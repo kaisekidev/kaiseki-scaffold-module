@@ -79,8 +79,9 @@ class BootstrapModuleCommand extends Command
 
         $sharedFiles = $this->getAllFilesInDirectory($this->rootDir . '/templates/shared');
         $typeFiles = $this->getAllFilesInDirectory($this->rootDir . '/templates/' . $this->getTypeFolder());
+        $baselineFiles = $this->getBaselineFiles();
 
-        $this->copyFiles(array_merge($sharedFiles, $typeFiles));
+        $this->copyFiles(array_merge($sharedFiles, $typeFiles, $baselineFiles));
 
         $this->cleanUp();
         $this->copyOutput();
@@ -171,6 +172,7 @@ class BootstrapModuleCommand extends Command
                 ->searchReplaceString($this->getArgTemplate('config_base_key'), $this->configBaseKey)
                 ->searchReplaceString($this->getArgTemplate('namespace'), $this->namespace)
                 ->searchReplaceString($this->getArgTemplate('namespace_escaped'), str_replace('\\', '\\\\', $this->namespace))
+                ->searchReplaceString($this->getArgTemplate('test_namespace'), $this->getTestNamespace())
                 ->searchReplaceString($this->getArgTemplate('repo_url'), $this->repoUrl)
                 ->searchReplaceString($this->getArgTemplate('copyright_holder'), $this->copyrightHolder)
                 ->writeToFile($this->getOutputPath($path), basename($path));
@@ -183,8 +185,10 @@ class BootstrapModuleCommand extends Command
         $dir = $this->rootDir. '/templates';
         $escapedDir = preg_quote($dir, '/');
 
+        // Map both the per-folder templates (templates/{core,wordpress,shared}/…)
+        // and the root-level baseline files (templates/phpunit.xml) onto output/.
         return preg_replace(
-            '/'. $escapedDir . '\/(core|wordpress|shared)/',
+            '/'. $escapedDir . '(\/(core|wordpress|shared))?/',
             $this->rootDir . '/output',
             $path
         ) ?? '';
@@ -358,6 +362,27 @@ class BootstrapModuleCommand extends Command
     }
 
     /**
+     * Root-level templates/ baseline files (org-wide canonical, not type-specific)
+     * that are copied verbatim into every module — e.g. templates/phpunit.xml.
+     *
+     * @return list<string>
+     */
+    private function getBaselineFiles(): array
+    {
+        $result = [];
+
+        foreach (['phpunit.xml'] as $name) {
+            $path = realpath($this->rootDir . '/templates/' . $name);
+
+            if ($path !== false) {
+                $result[] = $path;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
      * @param string $directory
      *
      * @return list<string>
@@ -400,5 +425,17 @@ class BootstrapModuleCommand extends Command
     private function getModulePrefix(): string
     {
         return $this->type === self::TYPE_WORDPRESS ? 'wp-' : '';
+    }
+
+    /**
+     * The namespace segment used for PHPUnit test suites: WordPress modules nest
+     * their tests under an extra `WordPress\` segment (Kaiseki\Test\Unit\WordPress\X),
+     * core modules do not (Kaiseki\Test\Unit\X).
+     */
+    private function getTestNamespace(): string
+    {
+        $prefix = $this->type === self::TYPE_WORDPRESS ? 'WordPress\\' : '';
+
+        return $prefix . $this->namespace;
     }
 }

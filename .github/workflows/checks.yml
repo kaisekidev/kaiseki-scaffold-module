@@ -1,3 +1,12 @@
+# Thin caller that delegates to the shared reusable workflow in
+# kaisekidev/.github (.github/workflows/checks.yml@v1). It mirrors the canonical
+# org starter (workflow-templates/checks.yml) — see that file and the README's
+# "Org-wide baselines" section.
+#
+# Per-package override: this repo is a `composer create-project` scaffolding tool
+# with no PHPUnit suite (its `composer check` is check-deps/cs-check/phpstan only),
+# so it pins `run-tests: false`. Everything else tracks the canonical caller.
+
 name: Checks
 
 on:
@@ -5,8 +14,23 @@ on:
   push:
     branches: [master]
 
+# Reusable workflows cannot elevate the caller's GITHUB_TOKEN permissions.
+# The caller (or the repo/org default token permissions) sets the maximum; the
+# reusable workflow can only further restrict.
+# Ensure `statuses: write` is granted (coverage-monitor sets a commit status),
+# otherwise the status update will fail at runtime (e.g. 403).
+#
+# Even if a repo opts out of coverage gating, it's fine to leave this block as-is.
+# If you remove or tighten permissions here, the reusable workflow cannot regain
+# scopes beyond the caller/repo defaults, so ensure required scopes remain
+# available (notably `pull-requests: write` and `statuses: write`).
+permissions:
+  contents: read
+  pull-requests: write
+  statuses: write
+
 jobs:
   checks:
     uses: kaisekidev/.github/.github/workflows/checks.yml@v1
     with:
-      run-tests: false   # scaffolding tool — no tests; static analysis only
+      run-tests: false               # scaffolding tool — no tests; static analysis only

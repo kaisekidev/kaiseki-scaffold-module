@@ -1,6 +1,7 @@
 # Dependabot config — keeps dev tooling (phpstan, php-cs-fixer, ...) and GitHub
-# Actions up to date so the 8.4 baseline doesn't drift. Dev deps are grouped
-# into a single weekly PR; production (runtime) deps get individual PRs.
+# Actions up to date so the 8.4 baseline doesn't drift. Dev deps AND all GitHub
+# Actions are each grouped into a single weekly PR to cut noise; production
+# (runtime) deps get individual PRs.
 
 version: 2
 updates:
@@ -26,3 +27,7 @@ updates:
     labels:
       - dependencies
       - github-actions
+    groups:
+      github-actions:
+        patterns:
+          - "*"
