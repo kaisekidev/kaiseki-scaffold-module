@@ -22,7 +22,7 @@
   },
   "require": {
     "php": "^8.2",
-    "laminas/laminas-filter": "^2.34",
+    "laminas/laminas-filter": "^3.4",
     "symfony/console": "^7.1"
   },
   "require-dev": {
