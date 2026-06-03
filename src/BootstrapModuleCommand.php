@@ -246,6 +246,7 @@ class BootstrapModuleCommand extends Command
         OutputInterface $output,
         QuestionHelper $questionHelper
     ): self {
+        /** @var string $default */
         $default = (new DashToUnderscore())->filter($this->moduleName);
 
         $question = new Question(
