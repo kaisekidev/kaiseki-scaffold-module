@@ -1,9 +1,14 @@
 # Dependabot config — keeps dev tooling (phpstan, php-cs-fixer, phpunit, ...)
-# and GitHub Actions up to date so the 8.4 baseline doesn't drift. Dev deps are
-# grouped into a single weekly PR; production (runtime) deps get individual PRs.
+# and GitHub Actions up to date so the 8.4 baseline doesn't drift. Dev deps AND
+# all GitHub Actions are each grouped into a single weekly PR to cut noise (an
+# ungrouped config opens one PR per action per repo); production (runtime) deps
+# get individual PRs because they affect downstream consumers and warrant review.
 #
 # NOTE: internal kaiseki/* deps are managed once they are on SemVer ranges
 # (e.g. ^1.0 / ^2.0); while any are still `dev-master` Dependabot leaves them be.
+#
+# Production majors that don't build green yet are a deliberate per-package
+# choice: add an `ignore:` entry under the composer ecosystem when needed.
 
 version: 2
 updates:
@@ -29,3 +34,7 @@ updates:
     labels:
       - dependencies
       - github-actions
+    groups:
+      github-actions:
+        patterns:
+          - "*"

@@ -1,9 +1,9 @@
-# Thin caller for the shared "Update Changelog" reusable workflow.
+# Thin caller for the shared "Update Changelog" reusable workflow in
+# kaisekidev/.github (.github/workflows/update-changelog.yml@v1).
 #
-# On a published GitHub Release, the reusable workflow in kaisekidev/.github
-# updates CHANGELOG.md from the release notes and opens an auto-merging PR. All
-# the action pins live in that reusable workflow, so there is nothing here for
-# Dependabot to bump.
+# On a published GitHub Release, the reusable workflow updates CHANGELOG.md from
+# the release notes and opens an auto-merging PR. All the action pins live in
+# that reusable workflow, so there is nothing here for Dependabot to bump.
 #
 # `secrets: inherit` forwards the org APP_ID / APP_PRIVATE_KEY secrets, which the
 # reusable workflow uses to mint a short-lived kaiseki-doc-bot GitHub App token

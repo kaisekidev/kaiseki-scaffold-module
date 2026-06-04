@@ -11,10 +11,10 @@
     failOnWarning="true"
 >
     <testsuites>
-        <testsuite name="Kaiseki\Test\Unit\%namespace%">
+        <testsuite name="Kaiseki\Test\Unit\%test_namespace%">
             <directory>tests/unit</directory>
         </testsuite>
-        <testsuite name="Kaiseki\Test\Functional\%namespace%">
+        <testsuite name="Kaiseki\Test\Functional\%test_namespace%">
             <directory>tests/functional</directory>
         </testsuite>
     </testsuites>

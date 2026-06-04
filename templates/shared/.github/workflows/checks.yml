@@ -1,19 +1,9 @@
-# Thin caller that delegates to the shared reusable workflow in kaisekidev/.github.
-# It runs check-deps / cs-check / phpstan (+ phpunit) across the 8.2/8.3/8.4 matrix.
-#
-# A freshly scaffolded module has no tests yet, so this defaults to static
-# analysis only (`run-tests: false`) with NO `permissions:` block. Once you add
-# real tests, remove the `with:` line below and add this block so the
-# coverage-monitor can post its commit status (the reusable workflow declares
-# `statuses: write` on every run, and a caller permissions block that omits it
-# fails with a startup_failure):
-#
-#   permissions:
-#     contents: read
-#     pull-requests: write
-#     statuses: write
-#
-# Set `coverage-threshold: <n>` in `with:` if coverage starts below 100%.
+# Thin caller that delegates to the shared reusable workflow in
+# kaisekidev/.github (.github/workflows/checks.yml@v1). The reusable workflow
+# runs the established tooling (shivammathur setup-php, Composer cache,
+# `composer update`, check-deps/cs-check/phpstan, phpunit + coverage-monitor)
+# across the 8.2/8.3/8.4 matrix. Default = strict: phpunit + 100% coverage gate
+# (reported on the 8.4 leg). Uncomment `with:` to override per package.
 
 name: Checks
 
@@ -22,8 +12,25 @@ on:
   push:
     branches: [master]
 
+# Reusable workflows cannot elevate the caller's GITHUB_TOKEN permissions.
+# The caller (or the repo/org default token permissions) sets the maximum; the
+# reusable workflow can only further restrict.
+# Ensure `statuses: write` is granted (coverage-monitor sets a commit status),
+# otherwise the status update will fail at runtime (e.g. 403).
+#
+# Even if a repo opts out of coverage gating, it's fine to leave this block as-is.
+# If you remove or tighten permissions here, the reusable workflow cannot regain
+# scopes beyond the caller/repo defaults, so ensure required scopes remain
+# available (notably `pull-requests: write` and `statuses: write`).
+permissions:
+  contents: read
+  pull-requests: write
+  statuses: write
+
 jobs:
   checks:
     uses: kaisekidev/.github/.github/workflows/checks.yml@v1
-    with:
-      run-tests: false   # no tests yet; static analysis only
+    # with:
+    #   coverage-threshold: 0          # opt out of the 100% gate until tests catch up
+    #   run-tests: false               # static-analysis only (the variant-A packages)
+    #   php-versions: '["8.2","8.3","8.4"]'
