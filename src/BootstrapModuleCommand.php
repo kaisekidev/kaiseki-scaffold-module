@@ -363,7 +363,10 @@ class BootstrapModuleCommand extends Command
 
     /**
      * Root-level templates/ baseline files (org-wide canonical, not type-specific)
-     * that are copied verbatim into every module — e.g. templates/phpunit.xml.
+     * shared by every module — e.g. templates/phpunit.xml. Like all templates they
+     * still pass through FileContent placeholder replacement (phpunit.xml carries
+     * %test_namespace%); they just live at the templates/ root rather than under a
+     * shared/core/wordpress folder.
      *
      * @return list<string>
      */
