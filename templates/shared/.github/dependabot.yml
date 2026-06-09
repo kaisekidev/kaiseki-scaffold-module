@@ -9,6 +9,11 @@
 #
 # Production majors that don't build green yet are a deliberate per-package
 # choice: add an `ignore:` entry under the composer ecosystem when needed.
+#
+# Labels use the org `area:*` taxonomy (see kaiseki-org contribution-style.md) —
+# *where* the bump lands, never a kind/`dependencies` label: composer dev-tooling
+# bumps are `area:tooling`, GitHub Actions bumps are `area:ci`. These labels must
+# exist in the repo (seeded by kaiseki-org `apply-repo-labels`).
 
 version: 2
 updates:
@@ -19,7 +24,7 @@ updates:
       day: monday
     open-pull-requests-limit: 10
     labels:
-      - dependencies
+      - area:tooling
     groups:
       dev-dependencies:
         dependency-type: development
@@ -32,8 +37,7 @@ updates:
       interval: weekly
       day: monday
     labels:
-      - dependencies
-      - github-actions
+      - area:ci
     groups:
       github-actions:
         patterns:
