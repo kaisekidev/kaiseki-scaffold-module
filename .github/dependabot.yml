@@ -12,7 +12,7 @@ updates:
       day: monday
     open-pull-requests-limit: 10
     labels:
-      - dependencies
+      - area:tooling
     groups:
       dev-dependencies:
         dependency-type: development
@@ -25,8 +25,7 @@ updates:
       interval: weekly
       day: monday
     labels:
-      - dependencies
-      - github-actions
+      - area:ci
     groups:
       github-actions:
         patterns:
