@@ -22,6 +22,8 @@ use function array_diff;
 use function array_merge;
 use function basename;
 use function dirname;
+use function file_get_contents;
+use function file_put_contents;
 use function filter_var;
 use function in_array;
 use function is_dir;
@@ -38,6 +40,8 @@ use function rmdir;
 use function scandir;
 use function sprintf;
 use function str_replace;
+use function stream_context_create;
+use function trim;
 use function unlink;
 
 use const DIRECTORY_SEPARATOR;
@@ -51,6 +55,18 @@ class BootstrapModuleCommand extends Command
 {
     private const TYPE_WORDPRESS = 'wordpress';
     private const TYPE_CORE = 'core';
+
+    /**
+     * CI caller workflows are fetched verbatim from the org-canonical starters in
+     * kaisekidev/.github at generate time — the scaffold keeps no copy of its own,
+     * so that public repo is the single source of truth and the callers can never
+     * drift. This requires network access to .github when generating a module.
+     */
+    private const CANONICAL_WORKFLOW_BASE =
+        'https://raw.githubusercontent.com/kaisekidev/.github/master/workflow-templates';
+
+    /** @var list<string> */
+    private const CANONICAL_WORKFLOWS = ['checks.yml', 'update-changelog.yml'];
 
     private string $type;
     private string $rootDir;
@@ -82,6 +98,10 @@ class BootstrapModuleCommand extends Command
         $baselineFiles = $this->getBaselineFiles();
 
         $this->copyFiles(array_merge($sharedFiles, $typeFiles, $baselineFiles));
+
+        // Fetch the CI callers from the canonical .github starters BEFORE cleanUp()
+        // wipes the checkout, so a network failure aborts without destroying it.
+        $this->fetchCanonicalWorkflows();
 
         $this->cleanUp();
         $this->copyOutput();
@@ -192,6 +212,44 @@ class BootstrapModuleCommand extends Command
             $this->rootDir . '/output',
             $path
         ) ?? '';
+    }
+
+    /**
+     * Fetch the org-canonical CI caller workflows from kaisekidev/.github and write
+     * them into the generated module verbatim (they carry no placeholders). The
+     * scaffold stores no copy, so there is no offline fallback: the canonical
+     * starters are the single source of truth. Called before cleanUp(), so a failed
+     * fetch aborts the run with the checkout still intact.
+     */
+    private function fetchCanonicalWorkflows(): void
+    {
+        $targetDir = $this->outputDir . '/.github/workflows';
+
+        if (!is_dir($targetDir) && !mkdir($targetDir, 0755, true) && !is_dir($targetDir)) {
+            throw new RuntimeException(sprintf('Could not create directory: %s', $targetDir));
+        }
+
+        $context = stream_context_create([
+            'http' => ['timeout' => 15, 'user_agent' => 'kaiseki-scaffold-module'],
+        ]);
+
+        foreach (self::CANONICAL_WORKFLOWS as $name) {
+            $url = self::CANONICAL_WORKFLOW_BASE . '/' . $name;
+            $contents = file_get_contents($url, false, $context);
+
+            if ($contents === false || trim($contents) === '') {
+                throw new RuntimeException(sprintf(
+                    'Could not fetch the canonical workflow %s. The scaffold pulls its CI '
+                    . 'callers from kaisekidev/.github at generate time, so network access to '
+                    . 'that public repo is required.',
+                    $url
+                ));
+            }
+
+            if (file_put_contents($targetDir . '/' . $name, $contents) === false) {
+                throw new RuntimeException(sprintf('Could not write %s/%s', $targetDir, $name));
+            }
+        }
     }
 
     private function askForType(
