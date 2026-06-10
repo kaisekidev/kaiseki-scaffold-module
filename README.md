@@ -44,18 +44,18 @@ copies in. Edit them here:
   (`ignore:`), not baked into the baseline.
 
 The two CI caller workflows the scaffold emits (`.github/workflows/checks.yml`
-and `update-changelog.yml`) are **not** owned here. They are thin callers kept
-byte-for-byte in sync with the canonical org starter workflows in
-[kaisekidev/.github](https://github.com/kaisekidev/.github/tree/master/workflow-templates).
-`bin/check-workflow-sync.sh` (run in CI and via `composer check-workflows`) fails
-if `templates/shared/.github/workflows/*.yml` drift from those starters — re-sync
-from the starters rather than editing the copies here.
+and `update-changelog.yml`) are **not** owned here, and the scaffold keeps **no
+copy** of them. `bin/console bootstrap-module` fetches them verbatim from the
+canonical org starter workflows in
+[kaisekidev/.github](https://github.com/kaisekidev/.github/tree/master/workflow-templates)
+at generate time, so that public repo is the single source of truth and the
+callers can never drift. (This means generating a module requires network access
+to `.github`; there is no offline fallback. Edit the callers in `.github`.)
 
 ## Development
 
 ```bash
 composer check            # check-deps + cs-check + phpstan
-composer check-workflows  # diff emitted callers against the canonical starters
 composer cs-fix           # apply php-cs-fixer fixes
 ```
 
